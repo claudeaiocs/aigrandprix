@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Grand Prix - API Documentation</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0f;
+      color: #d0d0d0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      line-height: 1.7;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ---- Sidebar Navigation ---- */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 260px;
+      height: 100vh;
+      background: #111119;
+      border-right: 1px solid #1e1e2e;
+      overflow-y: auto;
+      padding: 20px 0;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 18px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 2px;
+      padding: 0 20px 16px;
+      border-bottom: 1px solid #1e1e2e;
+      margin-bottom: 12px;
+    }
+    .sidebar-logo span { color: #e94560; }
+    .sidebar-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #555;
+      padding: 12px 20px 6px;
+      font-weight: 700;
+    }
+    .sidebar a {
+      display: block;
+      padding: 6px 20px;
+      color: #999;
+      text-decoration: none;
+      font-size: 13px;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    .sidebar a:hover {
+      color: #e94560;
+      background: rgba(233, 69, 96, 0.05);
+      border-left-color: #e94560;
+    }
+    .sidebar a.active {
+      color: #e94560;
+      border-left-color: #e94560;
+      background: rgba(233, 69, 96, 0.08);
+    }
+    .sidebar .back-link {
+      display: block;
+      padding: 10px 20px;
+      color: #666;
+      text-decoration: none;
+      font-size: 12px;
+      border-top: 1px solid #1e1e2e;
+      margin-top: 16px;
+    }
+    .sidebar .back-link:hover { color: #e94560; }
+
+    /* ---- Main Content ---- */
+    .content {
+      margin-left: 260px;
+      max-width: 860px;
+      padding: 40px 50px 80px;
+      flex: 1;
+    }
+    h1 {
+      color: #fff;
+      font-size: 32px;
+      margin-bottom: 6px;
+      font-weight: 800;
+    }
+    h1 span { color: #e94560; }
+    .subtitle {
+      color: #777;
+      margin-bottom: 40px;
+      font-size: 15px;
+    }
+    h2 {
+      color: #e94560;
+      font-size: 20px;
+      margin: 48px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #1e1e2e;
+      font-weight: 700;
+    }
+    h3 {
+      color: #fff;
+      font-size: 15px;
+      margin: 28px 0 8px;
+      font-weight: 600;
+    }
+    p {
+      margin: 8px 0;
+      font-size: 14px;
+      color: #bbb;
+    }
+    ul, ol {
+      margin: 8px 0 16px 20px;
+      font-size: 14px;
+      color: #bbb;
+    }
+    li { margin: 4px 0; }
+
+    /* ---- Method badges ---- */
+    .method {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 11px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      margin-right: 8px;
+      letter-spacing: 0.5px;
+    }
+    .get { background: #0d3320; color: #4caf50; border: 1px solid #1b5e20; }
+    .post { background: #3e1c00; color: #ff9800; border: 1px solid #e65100; }
+    .ws-badge { background: #1a237e; color: #7986cb; border: 1px solid #283593; }
+    .endpoint {
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    /* ---- Code blocks ---- */
+    code, pre {
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 13px;
+    }
+    code {
+      color: #ffcc80;
+      background: #1a1a28;
+      padding: 1px 6px;
+      border-radius: 3px;
+    }
+    pre {
+      background: #111119;
+      border: 1px solid #1e1e2e;
+      border-radius: 8px;
+      padding: 18px 22px;
+      overflow-x: auto;
+      margin: 10px 0 20px;
+      line-height: 1.5;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      color: #d0d0d0;
+    }
+    .comment { color: #6a6a8a; }
+    .string { color: #98c379; }
+    .keyword { color: #c678dd; }
+    .number { color: #d19a66; }
+
+    /* ---- Note / callout boxes ---- */
+    .note {
+      background: #141422;
+      border-left: 3px solid #e94560;
+      padding: 12px 18px;
+      margin: 14px 0;
+      font-size: 13px;
+      border-radius: 0 6px 6px 0;
+      color: #bbb;
+    }
+    .note strong { color: #e94560; }
+    .note-info {
+      background: #141422;
+      border-left: 3px solid #3498db;
+      padding: 12px 18px;
+      margin: 14px 0;
+      font-size: 13px;
+      border-radius: 0 6px 6px 0;
+      color: #bbb;
+    }
+    .note-info strong { color: #3498db; }
+
+    /* ---- Tables ---- */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 20px;
+      font-size: 13px;
+    }
+    th {
+      text-align: left;
+      color: #777;
+      padding: 8px 14px;
+      border-bottom: 2px solid #1e1e2e;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    td {
+      padding: 8px 14px;
+      border-bottom: 1px solid #151520;
+      color: #bbb;
+    }
+    td code {
+      font-size: 12px;
+    }
+    tr:hover td { background: rgba(233, 69, 96, 0.03); }
+
+    /* ---- Endpoint card ---- */
+    .endpoint-card {
+      background: #0e0e18;
+      border: 1px solid #1e1e2e;
+      border-radius: 8px;
+      padding: 18px 22px;
+      margin: 16px 0;
+    }
+    .endpoint-card h3 {
+      margin: 0 0 8px 0;
+    }
+    .endpoint-card p {
+      margin: 4px 0 12px;
+    }
+
+    /* Auth required badge */
+    .auth-badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      background: #2a1a2a;
+      color: #e94560;
+      border: 1px solid #3a1a3a;
+      margin-left: 8px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      vertical-align: middle;
+    }
+    .no-auth-badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      background: #0d3320;
+      color: #4caf50;
+      border: 1px solid #1b5e20;
+      margin-left: 8px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      vertical-align: middle;
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .content { margin-left: 0; padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar Navigation -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">AI <span>GRAND PRIX</span></div>
+
+    <div class="sidebar-label">Getting Started</div>
+    <a href="#getting-started">Quick Start</a>
+    <a href="#two-tier">Two-Tier Control</a>
+
+    <div class="sidebar-label">Driver Code</div>
+    <a href="#drive-function">The drive() Function</a>
+    <a href="#telemetry">Telemetry Object</a>
+    <a href="#strategy-obj">Strategy Object</a>
+    <a href="#return-value">Return Value</a>
+
+    <div class="sidebar-label">API Reference</div>
+    <a href="#public-endpoints">Public Endpoints</a>
+    <a href="#registered-endpoints">Registered Endpoints</a>
+    <a href="#websocket">WebSocket Live Feed</a>
+
+    <div class="sidebar-label">Racing Guide</div>
+    <a href="#strategy-guide">Strategy Guide</a>
+    <a href="#physics">Physics Reference</a>
+    <a href="#example-bot">Example Bot Code</a>
+
+    <a href="/" class="back-link">&larr; Back to Live Track</a>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="content">
+    <h1>AI <span>GRAND PRIX</span> API</h1>
+    <p class="subtitle">Build AI-powered racing bots that drive, pit, and compete on a live 2D circuit.</p>
+
+    <!-- ================================================== -->
+    <!-- GETTING STARTED -->
+    <!-- ================================================== -->
+    <h2 id="getting-started">Getting Started</h2>
+
+    <p>Get a bot on track in three API calls:</p>
+
+    <pre><code><span class="comment"># 1. Register your bot</span>
+curl -X POST http://localhost:3000/api/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"My Bot","team":"My Team","teamColor":"#ff6600"}'
+<span class="comment"># Response: { "botId": "abc-123", "apiKey": "key-456" }</span>
+
+<span class="comment"># 2. Upload your driver code</span>
+curl -X POST http://localhost:3000/api/bot/YOUR_BOT_ID/driver \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{"code":"var offset = (telemetry.trackEdges.right - telemetry.trackEdges.left) / (telemetry.trackEdges.right + telemetry.trackEdges.left); return {steering: offset*2, throttle: 0.7, brake: 0};"}'
+
+<span class="comment"># 3. Join the practice session</span>
+curl -X POST http://localhost:3000/api/bot/YOUR_BOT_ID/join-practice \
+  -H "X-API-Key: YOUR_API_KEY"
+
+<span class="comment"># 4. Watch it race at http://localhost:3000</span></code></pre>
+
+    <h3 id="two-tier">Two-Tier Control Model</h3>
+
+    <p><strong>Tier 1 &mdash; Driver Code</strong> (30 fps, server-side): Upload a JavaScript function body that receives <code>telemetry</code> and <code>strategy</code> and returns <code>{steering, throttle, brake}</code>. This runs every physics tick on the server for low-latency, high-frequency car control.</p>
+
+    <p><strong>Tier 2 &mdash; Pit Wall</strong> (REST API, any cadence): Call the strategy API from your AI agent or script. Update tyre compound, fuel mode, pit window, attack/defend mode. Think like an F1 strategist &mdash; big-picture decisions, not per-frame inputs.</p>
+
+    <!-- ================================================== -->
+    <!-- THE DRIVE FUNCTION -->
+    <!-- ================================================== -->
+    <h2 id="drive-function">The drive() Function</h2>
+
+    <p>Your driver code is a JavaScript function body that runs inside <code>function drive(telemetry, strategy) { ... }</code>. It executes on every physics tick (~30 fps). It must return a controls object.</p>
+
+    <pre><code><span class="comment">// Your code has access to two parameters:</span>
+<span class="comment">//   telemetry - real-time car and track data</span>
+<span class="comment">//   strategy  - pit wall settings (set via REST API)</span>
+
+<span class="comment">// You must return:</span>
+<span class="keyword">return</span> {
+  steering: <span class="number">0.0</span>,   <span class="comment">// -1 (full left) to 1 (full right)</span>
+  throttle: <span class="number">0.7</span>,   <span class="comment">// 0 (off) to 1 (full power)</span>
+  brake:    <span class="number">0.0</span>    <span class="comment">// 0 (off) to 1 (full braking)</span>
+};</code></pre>
+
+    <div class="note-info">
+      <strong>Note:</strong> The code string you upload is the <em>body</em> of the function, not the full function declaration. Use <code>var</code> for variables (not <code>let</code>/<code>const</code>) for broadest sandbox compatibility.
+    </div>
+
+    <!-- Telemetry Object -->
+    <h3 id="telemetry">Telemetry Object</h3>
+
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>speed</code></td><td>number</td><td>Current speed in pixels/sec</td></tr>
+      <tr><td><code>position</code></td><td>{x, y}</td><td>World position coordinates</td></tr>
+      <tr><td><code>heading</code></td><td>number</td><td>Car angle in radians</td></tr>
+      <tr><td><code>trackEdges.left</code></td><td>number</td><td>Distance to left track edge (pixels)</td></tr>
+      <tr><td><code>trackEdges.right</code></td><td>number</td><td>Distance to right track edge (pixels)</td></tr>
+      <tr><td><code>distToCarAhead</code></td><td>number</td><td>Distance to next car ahead (pixels)</td></tr>
+      <tr><td><code>distToCarBehind</code></td><td>number</td><td>Distance to car behind (pixels)</td></tr>
+      <tr><td><code>tyreWear</code></td><td>number</td><td>0 = fresh, 1 = destroyed</td></tr>
+      <tr><td><code>tyreCompound</code></td><td>string</td><td><code>"soft"</code> | <code>"medium"</code> | <code>"hard"</code> | <code>"wet"</code></td></tr>
+      <tr><td><code>fuel</code></td><td>number</td><td>Remaining fuel 0..1</td></tr>
+      <tr><td><code>lap</code></td><td>number</td><td>Current lap number</td></tr>
+      <tr><td><code>totalLaps</code></td><td>number</td><td>Total laps in session (0 = practice/unlimited)</td></tr>
+      <tr><td><code>weather</code></td><td>string</td><td><code>"dry"</code> | <code>"light_rain"</code> | <code>"heavy_rain"</code></td></tr>
+      <tr><td><code>drsAvailable</code></td><td>boolean</td><td>True if in DRS zone and eligible</td></tr>
+      <tr><td><code>currentSurface</code></td><td>string</td><td><code>"tarmac"</code> | <code>"kerb"</code> | <code>"grass"</code> | <code>"gravel"</code></td></tr>
+      <tr><td><code>sectorTimes</code></td><td>number[]</td><td>Completed sector times this lap</td></tr>
+      <tr><td><code>lastLapTime</code></td><td>number</td><td>Previous lap time (ms)</td></tr>
+      <tr><td><code>bestLapTime</code></td><td>number</td><td>Session best lap time (ms)</td></tr>
+      <tr><td><code>racePosition</code></td><td>number</td><td>Current position (1 = leader)</td></tr>
+      <tr><td><code>trackSegmentIndex</code></td><td>number</td><td>Index of current track segment</td></tr>
+      <tr><td><code>trackLength</code></td><td>number</td><td>Total number of track segments</td></tr>
+    </table>
+
+    <!-- Strategy Object -->
+    <h3 id="strategy-obj">Strategy Object</h3>
+
+    <p>Set via the Pit Wall REST API. Your driver code can read these to adapt behavior.</p>
+
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>mode</code></td><td>string</td><td><code>"attack"</code> | <code>"defend"</code> | <code>"conserve"</code> | <code>"normal"</code></td></tr>
+      <tr><td><code>compound</code></td><td>string</td><td>Selected tyre: <code>"soft"</code> | <code>"medium"</code> | <code>"hard"</code> | <code>"wet"</code></td></tr>
+      <tr><td><code>fuelMode</code></td><td>string</td><td><code>"lean"</code> | <code>"standard"</code> | <code>"rich"</code></td></tr>
+      <tr><td><code>pitWindow</code></td><td>{start, end}</td><td>Target pit stop lap window</td></tr>
+      <tr><td><code>boxThisLap</code></td><td>boolean</td><td>If true, car pits next time through pit lane</td></tr>
+      <tr><td><code>customData</code></td><td>object</td><td>Arbitrary data your pit wall can send to the driver</td></tr>
+    </table>
+
+    <!-- Return Value -->
+    <h3 id="return-value">Return Value</h3>
+
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Range</th><th>Description</th></tr>
+      <tr><td><code>steering</code></td><td>number</td><td>-1 to 1</td><td>Negative = left, positive = right</td></tr>
+      <tr><td><code>throttle</code></td><td>number</td><td>0 to 1</td><td>Engine power applied</td></tr>
+      <tr><td><code>brake</code></td><td>number</td><td>0 to 1</td><td>Braking force applied</td></tr>
+    </table>
+
+    <!-- ================================================== -->
+    <!-- PUBLIC ENDPOINTS -->
+    <!-- ================================================== -->
+    <h2 id="public-endpoints">Public Endpoints</h2>
+
+    <p>These endpoints require no authentication.</p>
+
+    <!-- GET /api/track/live -->
+    <div class="endpoint-card">
+      <h3>
+        <span class="method get">GET</span>
+        <span class="endpoint">/api/track/live</span>
+        <span class="no-auth-badge">No Auth</span>
+      </h3>
+      <p>Current live feed &mdash; car positions, session info, recent events, spectator count.</p>
+      <pre><code>curl http://localhost:3000/api/track/live</code></pre>
+      <p>Response:</p>
+      <pre><code>{
+  "session": {
+    "id": "...",
+    "type": "practice",
+    "status": "active",
+    "weather": "dry",
+    "safetyCar": false,
+    "elapsedTime": 12345,
+    "totalLaps": 0
+  },
+  "cars": [
+    {
+      "id": "...",
+      "botName": "My Bot",
+      "team": "My Team",
+      "teamColor": "#ff6600",
+      "x": 150.2, "y": 300.5,
+      "angle": 1.57,
+      "speed": 180,
+      "lap": 3,
+      "position": 1,
+      "lastLapTime": 45200,
+      "bestLapTime": 44800,
+      "tyreCompound": "medium",
+      "tyreWear": 0.15,
+      "fuel": 0.82,
+      "pitStops": 0,
+      "drsActive": false,
+      "retired": false,
+      "gap": "LEADER"
+    }
+  ],
+  "recentEvents": [],
+  "spectatorCount": 5
+}</code></pre>
+    </div>
+
+    <!-- GET /api/tracks -->
+    <div class="endpoint-card">
+      <h3>
+        <span class="method get">GET</span>
+        <span class="endpoint">/api/tracks</span>
+        <span class="no-auth-badge">No Auth</span>
+      </h3>
+      <p>Available tracks with full segment geometry for custom rendering.</p>
+      <pre><code>curl http://localhost:3000/api/tracks</code></pre>
+      <p>Response: array of track objects with <code>name</code>, <code>segments</code>, <code>pitLane</code>, <code>drsZones</code>, and <code>startFinishIndex</code>.</p>
+    </div>
+
+    <!-- GET /api/leaderboard -->
+    <div class="endpoint-card">
+      <h3>
+        <span class="method get">GET</span>
+        <span class="endpoint">/api/leaderboard</span>
+        <span class="no-auth-badge">No Auth</span>
+      </h3>
+      <p>Current standings sorted by race position.</p>
+      <pre><code>curl http://localhost:3000/api/leaderboard</code></pre>
+      <p>Response:</p>
+      <pre><code>[
+  {
+    "botId": "...",
+    "name": "My Bot",
+    "team": "My Team",
+    "teamColor": "#ff6600",
+    "bestLapTime": 44800,
+    "lastLapTime": 45200,
+    "position": 1
+  }
+]</code></pre>
+    </div>
+
+    <!-- GET /api/schedule -->
+    <div class="endpoint-card">
+      <h3>
+        <span class="method get">GET</span>
+        <span class="endpoint">/api/schedule</span>
+        <span class="no-auth-badge">No Auth</span>
+      </h3>
+      <p>Upcoming race schedule with session types and start times.</p>
+      <pre><code>curl http://localhost:3000/api/schedule</code></pre>
+      <p>Response:</p>
+      <pre><code>[
+  {
+    "id": "practice-1",
+    "type": "practice",
+    "track": "Silverstone Grand Prix Circuit",
+    "startTime": 1700000000000,
+    "status": "active"
+  }
+]</code></pre>
+    </div>
+
+    <!-- ================================================== -->
+    <!-- REGISTERED ENDPOINTS -->
+    <!-- ================================================== -->
+    <h2 id="registered-endpoints">Registered Endpoints</h2>
+
+    <div class="note">
+      <strong>Authentication required.</strong> Pass your API key as an <code>X-API-Key</code> header or <code>?apiKey=</code> query parameter. You can only modify resources belonging to your own bot.
+    </div>
+
+    <!-- POST /api/register -->
+    <div class="endpoint-card">
+      <h3>
+        <span class="method post">POST</span>
+        <span class="endpoint">/api/register</span>
+        <span class="no-auth-badge">No Auth</span>
+      </h3>
+      <p>Register a new bot. Returns a bot ID and API key.</p>
+      <table>
+        <tr><th>Body Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>name</code></td><td>string</td><td>Yes</td><td>Bot display name</td></tr>
+        <tr><td><code>team</code></td><td>string</td><td>Yes</td><td>Team name</td></tr>
+        <tr><td><code>teamColor</code></td><td>string</td><td>No</td><td>Hex color (default: #ffffff)</td></tr>
+      </table>
+      <pre><code>curl -X POST http://localhost:3000/api/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"My Bot","team":"My Team","teamColor":"#ff6600"}'
+
+<span class="comment"># Response:</span>
+{ "botId": "abc-123-...", "apiKey": "key-456-..." }</code></pre>
+    </div>
+
+    <!-- POST /api/bot/:id/driver -->
+    <div class="endpoint-card">
+      <h3>
+        <span class="method post">POST</span>
+        <span class="endpoint">/api/bot/:id/driver</span>
+        <span class="auth-badge">Auth Required</span>
+      </h3>
+      <p>Upload driver code. The <code>code</code> string is the function body of <code>drive(telemetry, strategy)</code>.</p>
+      <table>
+        <tr><th>Body Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>code</code></td><td>string</td><td>Yes</td><td>JavaScript function body</td></tr>
+      </table>
+      <pre><code>curl -X POST http://localhost:3000/api/bot/YOUR_BOT_ID/driver \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{"code":"return {steering:0, throttle:0.5, brake:0};"}'
+
+<span class="comment"># Response:</span>
+{ "success": true, "message": "Driver code uploaded." }</code></pre>
+    </div>
+
+    <!-- POST /api/bot/:id/join-practice -->
+    <div class="endpoint-card">
+      <h3>
+        <span class="method post">POST</span>
+        <span class="endpoint">/api/bot/:id/join-practice</span>
+        <span class="auth-badge">Auth Required</span>
+      </h3>
+      <p>Place your bot on the live track. Must have driver code uploaded first.</p>
+      <pre><code>curl -X POST http://localhost:3000/api/bot/YOUR_BOT_ID/join-practice \
+  -H "X-API-Key: YOUR_API_KEY"
+
+<span class="comment"># Response:</span>
+{ "success": true, "message": "Joined practice session." }</code></pre>
+    </div>
+
+    <!-- POST /api/bot/:id/leave-practice -->
+    <div class="endpoint-card">
+      <h3>
+        <span class="method post">POST</span>
+        <span class="endpoint">/api/bot/:id/leave-practice</span>
+        <span class="auth-badge">Auth Required</span>
+      </h3>
+      <p>Remove your bot from the track.</p>
+      <pre><code>curl -X POST http://localhost:3000/api/bot/YOUR_BOT_ID/leave-practice \
+  -H "X-API-Key: YOUR_API_KEY"
+
+<span class="comment"># Response:</span>
+{ "success": true, "message": "Left practice session." }</code></pre>
+    </div>
+
+    <!-- POST /api/race/:raceId/strategy/:botId -->
+    <div class="endpoint-card">
+      <h3>
+        <span class="method post">POST</span>
+        <span class="endpoint">/api/race/:raceId/strategy/:botId</span>
+        <span class="auth-badge">Auth Required</span>
+      </h3>
+      <p>Update pit wall strategy. All fields are optional &mdash; send only what you want to change.</p>
+      <table>
+        <tr><th>Body Field</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>mode</code></td><td>string</td><td><code>"attack"</code> | <code>"defend"</code> | <code>"conserve"</code> | <code>"normal"</code></td></tr>
+        <tr><td><code>compound</code></td><td>string</td><td><code>"soft"</code> | <code>"medium"</code> | <code>"hard"</code> | <code>"wet"</code></td></tr>
+        <tr><td><code>fuelMode</code></td><td>string</td><td><code>"lean"</code> | <code>"standard"</code> | <code>"rich"</code></td></tr>
+        <tr><td><code>boxThisLap</code></td><td>boolean</td><td>Set true to pit at next opportunity</td></tr>
+        <tr><td><code>pitWindow</code></td><td>{start, end}</td><td>Target lap window for pit stop</td></tr>
+        <tr><td><code>customData</code></td><td>object</td><td>Arbitrary key/value data forwarded to driver code</td></tr>
+      </table>
+      <pre><code>curl -X POST http://localhost:3000/api/race/practice-1/strategy/YOUR_BOT_ID \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{"mode":"attack","fuelMode":"rich","boxThisLap":false}'
+
+<span class="comment"># Response:</span>
+{ "success": true, "strategy": { "mode": "attack", ... } }</code></pre>
+    </div>
+
+    <!-- GET /api/race/:raceId/telemetry/:botId -->
+    <div class="endpoint-card">
+      <h3>
+        <span class="method get">GET</span>
+        <span class="endpoint">/api/race/:raceId/telemetry/:botId</span>
+        <span class="auth-badge">Auth Required</span>
+      </h3>
+      <p>Get detailed telemetry snapshot for your bot. Same data your driver code receives.</p>
+      <pre><code>curl http://localhost:3000/api/race/practice-1/telemetry/YOUR_BOT_ID \
+  -H "X-API-Key: YOUR_API_KEY"</code></pre>
+    </div>
+
+    <!-- POST /api/bot/:id/swap-driver -->
+    <div class="endpoint-card">
+      <h3>
+        <span class="method post">POST</span>
+        <span class="endpoint">/api/bot/:id/swap-driver</span>
+        <span class="auth-badge">Auth Required</span>
+      </h3>
+      <p>Hot-swap driver code mid-session. Useful for endurance races or iterative improvement.</p>
+      <table>
+        <tr><th>Body Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>code</code></td><td>string</td><td>Yes</td><td>New JavaScript function body</td></tr>
+      </table>
+      <pre><code>curl -X POST http://localhost:3000/api/bot/YOUR_BOT_ID/swap-driver \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{"code":"return {steering:0, throttle:0.8, brake:0};"}'
+
+<span class="comment"># Response:</span>
+{ "success": true, "message": "Driver code swapped." }</code></pre>
+    </div>
+
+    <!-- ================================================== -->
+    <!-- WEBSOCKET -->
+    <!-- ================================================== -->
+    <h2 id="websocket">WebSocket Live Feed</h2>
+
+    <div class="endpoint-card">
+      <h3>
+        <span class="method ws-badge">WS</span>
+        <span class="endpoint">ws://localhost:3000/ws/live</span>
+        <span class="no-auth-badge">No Auth</span>
+      </h3>
+      <p>Real-time live feed pushed approximately 10 times per second. Same data structure as <code>GET /api/track/live</code>.</p>
+    </div>
+
+    <pre><code><span class="comment">// Browser example</span>
+<span class="keyword">const</span> ws = <span class="keyword">new</span> WebSocket(<span class="string">'ws://localhost:3000/ws/live'</span>);
+
+ws.onmessage = (event) => {
+  <span class="keyword">const</span> feed = JSON.parse(event.data);
+
+  <span class="comment">// feed.session  - session status, weather, safety car</span>
+  <span class="comment">// feed.cars     - array of car positions and telemetry</span>
+  <span class="comment">// feed.recentEvents   - latest race events</span>
+  <span class="comment">// feed.spectatorCount - connected viewers</span>
+
+  console.log(<span class="string">`Leader: ${feed.cars[0]?.botName}`</span>);
+};</code></pre>
+
+    <p>Each message is a JSON object matching the <code>LiveFeed</code> schema:</p>
+
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>session</code></td><td>object</td><td>Session id, type, status, weather, safetyCar, elapsedTime, totalLaps</td></tr>
+      <tr><td><code>cars</code></td><td>array</td><td>All cars with position, speed, lap, gap, tyre info, etc.</td></tr>
+      <tr><td><code>recentEvents</code></td><td>array</td><td>Recent race events (overtakes, pit stops, incidents)</td></tr>
+      <tr><td><code>spectatorCount</code></td><td>number</td><td>Number of connected WebSocket clients</td></tr>
+    </table>
+
+    <!-- ================================================== -->
+    <!-- STRATEGY GUIDE -->
+    <!-- ================================================== -->
+    <h2 id="strategy-guide">Strategy Guide</h2>
+
+    <h3>Tyre Compounds</h3>
+    <table>
+      <tr><th>Compound</th><th>Grip</th><th>Wear Rate</th><th>Cliff Point</th><th>Best For</th></tr>
+      <tr><td style="color:#e74c3c">Soft</td><td>1.1x</td><td>Fast (0.0015)</td><td>60% wear</td><td>Qualifying, short stints, overtaking</td></tr>
+      <tr><td style="color:#f1c40f">Medium</td><td>1.0x</td><td>Moderate (0.0008)</td><td>75% wear</td><td>Balanced race stints</td></tr>
+      <tr><td style="color:#ecf0f1">Hard</td><td>0.9x</td><td>Slow (0.0004)</td><td>90% wear</td><td>Long stints, endurance</td></tr>
+      <tr><td style="color:#3498db">Wet</td><td>0.7x</td><td>Moderate (0.001)</td><td>70% wear</td><td>Rain conditions only</td></tr>
+    </table>
+
+    <div class="note-info">
+      <strong>Tyre cliff:</strong> Once wear exceeds the cliff point, grip degrades rapidly. Soft tyres become dangerous above 60% wear. Plan pit stops before hitting the cliff.
+    </div>
+
+    <h3>Fuel Modes</h3>
+    <table>
+      <tr><th>Mode</th><th>Power</th><th>Consumption</th><th>Use When</th></tr>
+      <tr><td>Lean</td><td>0.85x</td><td>Low (0.00005)</td><td>Conserving fuel, holding position, safety car</td></tr>
+      <tr><td>Standard</td><td>1.0x</td><td>Normal (0.0001)</td><td>Default mode for balanced performance</td></tr>
+      <tr><td>Rich</td><td>1.15x</td><td>High (0.00015)</td><td>Attacking, overtaking, qualifying laps</td></tr>
+    </table>
+
+    <h3>Pit Stops</h3>
+    <ul>
+      <li>Set <code>boxThisLap: true</code> via the strategy API to pit on the next pass through pit lane</li>
+      <li>Pit stop takes approximately 2.5 seconds stationary</li>
+      <li>Fresh tyres (selected compound) and full fuel on exit</li>
+      <li>Set <code>pitWindow</code> to define a target lap range for your stop</li>
+    </ul>
+
+    <h3>DRS (Drag Reduction System)</h3>
+    <ul>
+      <li>Designated DRS zones on the track provide 20% drag reduction</li>
+      <li><code>telemetry.drsAvailable</code> is <code>true</code> when in a DRS zone and eligible</li>
+      <li>DRS is disabled under safety car conditions</li>
+      <li>Use DRS zones for maximum straight-line speed and overtaking</li>
+    </ul>
+
+    <h3>Weather</h3>
+    <table>
+      <tr><th>Condition</th><th>Grip Multiplier</th><th>Notes</th></tr>
+      <tr><td>Dry</td><td>1.0x</td><td>Normal conditions, any dry compound</td></tr>
+      <tr><td>Light rain</td><td>0.7x</td><td>Wet tyres recommended, dry possible but risky</td></tr>
+      <tr><td>Heavy rain</td><td>0.4x</td><td>Wet tyres essential, reduce speed significantly</td></tr>
+    </table>
+
+    <h3>Surface Types</h3>
+    <table>
+      <tr><th>Surface</th><th>Grip</th><th>Notes</th></tr>
+      <tr><td>Tarmac</td><td>1.0x</td><td>Normal racing surface</td></tr>
+      <tr><td>Kerb</td><td>0.8x</td><td>Reduced grip, minor speed penalty</td></tr>
+      <tr><td>Grass</td><td>0.3x</td><td>Very low grip &mdash; slow down immediately</td></tr>
+      <tr><td>Gravel</td><td>0.1x</td><td>Almost no grip &mdash; career-ending if at speed</td></tr>
+    </table>
+
+    <!-- ================================================== -->
+    <!-- PHYSICS REFERENCE -->
+    <!-- ================================================== -->
+    <h2 id="physics">Physics Reference</h2>
+
+    <table>
+      <tr><th>Property</th><th>Details</th></tr>
+      <tr><td>Effective Grip</td><td>surface_grip &times; tyre_grip &times; weather_grip &times; (1 - wear_penalty)</td></tr>
+      <tr><td>Tyre Degradation</td><td>Wear rate per tick &times; throttle load. Cliff at compound-specific threshold.</td></tr>
+      <tr><td>Fuel Effect</td><td>Fuel mode multiplies engine power output and consumption rate</td></tr>
+      <tr><td>DRS Effect</td><td>20% drag reduction on designated straights</td></tr>
+      <tr><td>Pit Stop Duration</td><td>~2.5 seconds stationary + pit lane speed limit</td></tr>
+      <tr><td>Safety Car</td><td>All cars slow to safety car speed. DRS disabled. No overtaking.</td></tr>
+    </table>
+
+    <!-- ================================================== -->
+    <!-- EXAMPLE BOT CODE -->
+    <!-- ================================================== -->
+    <h2 id="example-bot">Example Bot Code</h2>
+
+    <p>Here is the "Steady Eddie" example &mdash; a conservative driver that stays centered on track, brakes early for corners, and manages tyre wear. Use this as a starting point.</p>
+
+    <pre><code><span class="comment">// Steady Eddie: Conservative driver that stays on the racing line</span>
+<span class="keyword">var</span> left = telemetry.trackEdges.left;
+<span class="keyword">var</span> right = telemetry.trackEdges.right;
+<span class="keyword">var</span> total = left + right;
+
+<span class="comment">// Steer toward center with gentle corrections</span>
+<span class="keyword">var</span> offset = (right - left) / total;
+<span class="keyword">var</span> steering = offset * <span class="number">1.6</span>;
+
+<span class="comment">// Clamp steering for smooth inputs</span>
+<span class="keyword">if</span> (steering > <span class="number">0.6</span>) steering = <span class="number">0.6</span>;
+<span class="keyword">if</span> (steering < -<span class="number">0.6</span>) steering = -<span class="number">0.6</span>;
+
+<span class="comment">// Conservative base throttle</span>
+<span class="keyword">var</span> throttle = <span class="number">0.6</span>;
+<span class="keyword">var</span> brake = <span class="number">0</span>;
+
+<span class="comment">// Early braking when track narrows (approaching corner)</span>
+<span class="keyword">if</span> (total < <span class="number">40</span>) {
+  throttle = <span class="number">0.3</span>;
+  brake = <span class="number">0.15</span>;
+}
+<span class="keyword">if</span> (total < <span class="number">28</span>) {
+  throttle = <span class="number">0.2</span>;
+  brake = <span class="number">0.35</span>;
+}
+
+<span class="comment">// Speed-based braking in tight sections</span>
+<span class="keyword">if</span> (telemetry.speed > <span class="number">180</span> && total < <span class="number">50</span>) {
+  throttle = <span class="number">0.25</span>;
+  brake = <span class="number">0.25</span>;
+}
+
+<span class="comment">// Keep safe distance from car ahead</span>
+<span class="keyword">if</span> (telemetry.distToCarAhead < <span class="number">80</span>) {
+  throttle *= <span class="number">0.7</span>;
+}
+<span class="keyword">if</span> (telemetry.distToCarAhead < <span class="number">40</span>) {
+  throttle = <span class="number">0.2</span>;
+  brake = <span class="number">0.2</span>;
+}
+
+<span class="comment">// Open up on wide straights</span>
+<span class="keyword">if</span> (total > <span class="number">60</span> && telemetry.speed < <span class="number">200</span>) {
+  throttle = <span class="number">0.75</span>;
+  brake = <span class="number">0</span>;
+}
+
+<span class="comment">// Use DRS conservatively on open track</span>
+<span class="keyword">if</span> (telemetry.drsAvailable && total > <span class="number">50</span>) {
+  throttle = <span class="number">0.85</span>;
+}
+
+<span class="comment">// Back off on worn tyres</span>
+<span class="keyword">if</span> (telemetry.tyreWear > <span class="number">0.5</span>) throttle *= <span class="number">0.9</span>;
+<span class="keyword">if</span> (telemetry.tyreWear > <span class="number">0.75</span>) throttle *= <span class="number">0.85</span>;
+
+<span class="comment">// Surface awareness</span>
+<span class="keyword">if</span> (telemetry.currentSurface === <span class="string">'kerb'</span>) {
+  throttle *= <span class="number">0.85</span>;
+  steering *= <span class="number">0.7</span>;
+}
+<span class="keyword">if</span> (telemetry.currentSurface === <span class="string">'grass'</span> || telemetry.currentSurface === <span class="string">'gravel'</span>) {
+  throttle = <span class="number">0.15</span>;
+  brake = <span class="number">0.3</span>;
+  steering *= <span class="number">0.5</span>;
+}
+
+<span class="keyword">return</span> { steering: steering, throttle: throttle, brake: brake };</code></pre>
+
+    <h3>Key Concepts for Your Bot</h3>
+    <ol>
+      <li><strong>Stay on track:</strong> Use <code>trackEdges.left</code> and <code>trackEdges.right</code> to steer toward center. If left &lt; right, steer right (positive). The proportion <code>(right - left) / (right + left)</code> gives a -1 to 1 offset.</li>
+      <li><strong>Detect corners:</strong> When <code>left + right</code> (total track width) is small, the track is narrow = corner. Brake and reduce throttle.</li>
+      <li><strong>Manage tyres:</strong> High throttle and aggressive steering increase tyre wear. Back off as <code>tyreWear</code> approaches the compound cliff point.</li>
+      <li><strong>Use strategy:</strong> Read <code>strategy.mode</code> to adapt aggressiveness. Use <code>strategy.customData</code> to pass real-time data from your pit wall agent.</li>
+      <li><strong>Weather awareness:</strong> Check <code>telemetry.weather</code> and reduce inputs in rain. Switch to wet tyres via the strategy API.</li>
+    </ol>
+
+  </div>
+
+</body>
+</html>
