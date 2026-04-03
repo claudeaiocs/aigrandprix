@@ -16,11 +16,11 @@ export const exampleBots: Array<{name: string, team: string, teamColor: string, 
   // Bot 1: Steady Eddie - Conservative, consistent driver
   // ---------------------------------------------------------
   {
-    name: 'Steady Eddie',
-    team: 'Consistent Racing',
+    name: 'Johnny Turbo',
+    team: 'Turbo Racing',
     teamColor: '#3498db',
     code: `
-  // Steady Eddie v3: Speed-to-width targeting + wall avoidance
+  // Johnny Turbo: Fast and consistent — speed-to-width targeting
   var left = telemetry.trackEdges.left;
   var right = telemetry.trackEdges.right;
   var total = left + right;
@@ -90,11 +90,11 @@ export const exampleBots: Array<{name: string, team: string, teamColor: string, 
   // Bot 2: Speed Demon - Aggressive, push-the-limits driver
   // ---------------------------------------------------------
   {
-    name: 'Speed Demon',
+    name: 'Max Throttle',
     team: 'Maximum Attack',
     teamColor: '#e74c3c',
     code: `
-  // Speed Demon v3: Fast but smart — uses speed-to-width ratio
+  // Max Throttle: Aggressive late braker — lives on the edge
   var left = telemetry.trackEdges.left;
   var right = telemetry.trackEdges.right;
   var total = left + right;
@@ -157,11 +157,11 @@ export const exampleBots: Array<{name: string, team: string, teamColor: string, 
   // Bot 3: Smooth Operator - Balanced, tyre-saving driver
   // ---------------------------------------------------------
   {
-    name: 'Smooth Operator',
-    team: 'Silk Racing',
+    name: 'Gloria Slap',
+    team: 'Slap Racing',
     teamColor: '#2ecc71',
     code: `
-  // Smooth Operator v2: Predictive braking, zero wall hits
+  // Gloria Slap: Smooth and calculated — zero wall hits is the goal
   var left = telemetry.trackEdges.left;
   var right = telemetry.trackEdges.right;
   var total = left + right;
