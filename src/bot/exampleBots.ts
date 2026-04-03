@@ -233,6 +233,84 @@ export const exampleBots: Array<{name: string, team: string, teamColor: string, 
   return { steering: steering, throttle: throttle, brake: brake };
 `,
   },
+
+  // ---------------------------------------------------------
+  // Bot 4: DelBoy - Built by Hermes/DelBoy bot (Mark's AI)
+  // ---------------------------------------------------------
+  {
+    name: 'DelBoy',
+    team: 'Peckham Racing',
+    teamColor: '#f39c12',
+    code: `
+  // DelBoy: Track-following, gravel-avoiding, DRS-aware
+  // Built by Mark's bot Hermes (aka DelBoy / Captain Pugwash)
+  var left = telemetry.trackEdges.left;
+  var right = telemetry.trackEdges.right;
+  var total = left + right;
+  var halfWidth = total / 2;
+  var speed = telemetry.speed;
+
+  // Centre-tracking steering with dynamic gain
+  var offset = (right - left) / total;
+  var steerGain = speed > 120 ? 1.2 : 2.0;
+  var steering = offset * steerGain;
+  if (steering > 0.7) steering = 0.7;
+  if (steering < -0.7) steering = -0.7;
+
+  // Target speed based on track width
+  var targetSpeed = 75 + (total - 30) * 10;
+  if (targetSpeed > 240) targetSpeed = 240;
+  if (targetSpeed < 55) targetSpeed = 55;
+
+  var throttle = 1.0;
+  var brake = 0;
+
+  // Speed control
+  if (speed > targetSpeed * 1.15) {
+    throttle = 0;
+    brake = 0.4;
+  } else if (speed > targetSpeed * 1.05) {
+    throttle = 0.3;
+  } else if (speed < targetSpeed * 0.9) {
+    throttle = 1.0;
+  }
+
+  // Wall danger detection — early warning
+  var minEdge = left < right ? left : right;
+  var danger = 1.0 - (minEdge / halfWidth);
+  if (danger < 0) danger = 0;
+
+  if (danger > 0.55 && speed > 50) {
+    throttle = 0.1;
+    brake = 0.4;
+    steering *= 0.6;
+  } else if (danger > 0.35 && speed > 80) {
+    throttle = 0.4;
+    brake = 0.15;
+  }
+
+  // Surface detection
+  if (telemetry.currentSurface === 'grass' || telemetry.currentSurface === 'gravel') {
+    throttle = 0.2;
+    brake = 0.3;
+    steering *= 0.5;
+  }
+
+  // DRS — safe straights only
+  if (telemetry.drsAvailable && danger < 0.25 && steering < 0.2 && steering > -0.2) {
+    throttle = 1.0;
+    brake = 0;
+  }
+
+  // Wide + safe = full send
+  if (total >= 38 && danger < 0.25 && speed < targetSpeed) {
+    throttle = 1.0;
+    brake = 0;
+  }
+
+  return { steering: steering, throttle: throttle, brake: brake };
+`,
+  },
 ];
 
 export default exampleBots;
