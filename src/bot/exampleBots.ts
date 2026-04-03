@@ -1,5 +1,14 @@
 // ============================================================
-// AI Grand Prix - Example Bots
+// AI Grand Prix - Example Bots (v2 - track-aware)
+//
+// Key facts for bot authors:
+//   - Track width: 30-42px (halfWidth 15-21px)
+//   - trackEdges.left + right = total width at current point
+//   - Speed units: pixels/sec, max ~250px/s at full throttle
+//   - Lateral offset from steering: proportional to speed
+//   - Wall hit = 30% speed loss + tyre damage
+//   - Segments have angle changes; tight turns = short segments
+//   - The key to fast laps: stay centred, brake for turns, full throttle on straights
 // ============================================================
 
 export const exampleBots: Array<{name: string, team: string, teamColor: string, code: string}> = [
@@ -11,75 +20,65 @@ export const exampleBots: Array<{name: string, team: string, teamColor: string, 
     team: 'Consistent Racing',
     teamColor: '#3498db',
     code: `
-  // Steady Eddie: Conservative driver that stays on the racing line
+  // Steady Eddie v3: Speed-to-width targeting + wall avoidance
   var left = telemetry.trackEdges.left;
   var right = telemetry.trackEdges.right;
   var total = left + right;
+  var halfWidth = total / 2;
+  var speed = telemetry.speed;
 
-  // Steer toward center with gentle corrections
+  // Centre-tracking steering with speed damping
   var offset = (right - left) / total;
-  var steering = offset * 1.6;
+  var steerGain = speed > 100 ? 1.1 : 1.8;
+  var steering = offset * steerGain;
+  if (steering > 0.65) steering = 0.65;
+  if (steering < -0.65) steering = -0.65;
 
-  // Clamp steering for smooth inputs
-  if (steering > 0.6) steering = 0.6;
-  if (steering < -0.6) steering = -0.6;
+  // Target speed based on track width
+  var targetSpeed = 70 + (total - 30) * 10;  // 30px→70, 42px→190
+  if (targetSpeed > 230) targetSpeed = 230;
+  if (targetSpeed < 55) targetSpeed = 55;
 
-  // Conservative base throttle
-  var throttle = 0.6;
+  var throttle = 1.0;
   var brake = 0;
 
-  // Early braking when track narrows (approaching corner)
-  if (total < 40) {
-    throttle = 0.3;
-    brake = 0.15;
-  }
-  if (total < 28) {
-    throttle = 0.2;
+  // Smooth speed management
+  if (speed > targetSpeed * 1.15) {
+    throttle = 0;
     brake = 0.35;
+  } else if (speed > targetSpeed) {
+    throttle = 0.3;
   }
 
-  // Slight speed-based braking - slow down if going fast in tight sections
-  if (telemetry.speed > 180 && total < 50) {
-    throttle = 0.25;
-    brake = 0.25;
+  // Wall danger — earlier response than Speed Demon
+  var minEdge = left < right ? left : right;
+  var danger = 1.0 - (minEdge / halfWidth);
+  if (danger < 0) danger = 0;
+
+  if (danger > 0.5 && speed > 50) {
+    throttle = 0.15;
+    brake = 0.35;
+  } else if (danger > 0.35 && speed > 80) {
+    throttle = 0.4;
+    brake = 0.1;
   }
 
-  // Keep safe distance from car ahead
-  if (telemetry.distToCarAhead < 80) {
-    throttle *= 0.7;
-  }
-  if (telemetry.distToCarAhead < 40) {
-    throttle = 0.2;
-    brake = 0.2;
-  }
-
-  // On wide open straights, open up a bit
-  if (total > 60 && telemetry.speed < 200) {
-    throttle = 0.75;
+  // Wide + safe = full send
+  if (total >= 38 && danger < 0.25) {
+    throttle = 1.0;
     brake = 0;
   }
 
-  // Use DRS conservatively
-  if (telemetry.drsAvailable && total > 50) {
-    throttle = 0.85;
+  // DRS
+  if (telemetry.drsAvailable && danger < 0.25) {
+    throttle = 1.0;
+    brake = 0;
   }
 
-  // Back off on worn tyres
-  if (telemetry.tyreWear > 0.5) {
-    throttle *= 0.9;
-  }
-  if (telemetry.tyreWear > 0.75) {
-    throttle *= 0.85;
-  }
-
-  // Reduce aggression on low-grip surfaces
-  if (telemetry.currentSurface === 'kerb') {
-    throttle *= 0.85;
-    steering *= 0.7;
-  }
+  // Off-track
   if (telemetry.currentSurface === 'grass' || telemetry.currentSurface === 'gravel') {
-    throttle = 0.15;
-    brake = 0.3;
+    throttle = 0.2;
+    brake = 0.2;
     steering *= 0.5;
   }
 
@@ -95,82 +94,59 @@ export const exampleBots: Array<{name: string, team: string, teamColor: string, 
     team: 'Maximum Attack',
     teamColor: '#e74c3c',
     code: `
-  // Speed Demon: Aggressive driver that pushes hard
+  // Speed Demon v3: Fast but smart — uses speed-to-width ratio
   var left = telemetry.trackEdges.left;
   var right = telemetry.trackEdges.right;
   var total = left + right;
+  var halfWidth = total / 2;
+  var speed = telemetry.speed;
 
-  // Aggressive steering with sharper corrections
+  // Centre-seeking with speed damping
   var offset = (right - left) / total;
-  var steering = offset * 2.8;
+  var steerGain = speed > 100 ? 1.3 : 2.2;
+  var steering = offset * steerGain;
+  if (steering > 0.8) steering = 0.8;
+  if (steering < -0.8) steering = -0.8;
 
-  // High base throttle - always attacking
-  var throttle = 0.9;
+  // Target speed based on width — aggressive mapping
+  var targetSpeed = 80 + (total - 30) * 12;  // 30px→80, 42px→224
+  if (targetSpeed > 250) targetSpeed = 250;
+  if (targetSpeed < 60) targetSpeed = 60;
+
+  var throttle = 1.0;
   var brake = 0;
 
-  // Late braking - only brake in very tight sections
-  if (total < 25) {
-    throttle = 0.35;
-    brake = 0.4;
-  } else if (total < 35) {
-    throttle = 0.55;
-    brake = 0.1;
-  }
-
-  // Full send on straights
-  if (total > 55) {
-    throttle = 1.0;
-    brake = 0;
-  }
-
-  // Slam DRS open whenever possible
-  if (telemetry.drsAvailable) {
-    throttle = 1.0;
-    brake = 0;
-  }
-
-  // Only back off from car ahead at very close range
-  if (telemetry.distToCarAhead < 30) {
+  // Speed management — brake hard if way over target
+  if (speed > targetSpeed * 1.3) {
+    throttle = 0;
+    brake = 0.5;
+  } else if (speed > targetSpeed * 1.1) {
+    throttle = 0.2;
+    brake = 0.15;
+  } else if (speed > targetSpeed) {
     throttle = 0.5;
-    // Try to find a gap - steer slightly to the side with more room
-    if (left > right) {
-      steering -= 0.15;
-    } else {
-      steering += 0.15;
-    }
   }
 
-  // Barely notices tyre wear - only reacts when critical
-  if (telemetry.tyreWear > 0.8) {
-    throttle *= 0.9;
+  // Wall danger override
+  var minEdge = left < right ? left : right;
+  var danger = 1.0 - (minEdge / halfWidth);
+  if (danger < 0) danger = 0;
+  if (danger > 0.6 && speed > 60) {
+    throttle = 0.1;
+    brake = 0.4;
   }
 
-  // Attack mode from strategy pushes even harder
-  if (strategy.mode === 'attack') {
-    throttle = Math.min(throttle * 1.1, 1.0);
+  // DRS
+  if (telemetry.drsAvailable && danger < 0.3) {
+    throttle = 1.0;
+    brake = 0;
   }
 
-  // Rich fuel mode when available - more power
-  if (strategy.fuelMode === 'rich' && total > 40) {
-    throttle = Math.min(throttle + 0.05, 1.0);
-  }
-
-  // Even on bad surfaces, still push (slightly reckless)
-  if (telemetry.currentSurface === 'kerb') {
-    throttle *= 0.9;
-  }
+  // Off-track
   if (telemetry.currentSurface === 'grass' || telemetry.currentSurface === 'gravel') {
-    throttle = 0.3;
-    brake = 0.2;
-    steering *= 0.6;
-  }
-
-  // Wet weather? Still pushing, just a touch less
-  if (telemetry.weather === 'light_rain') {
-    throttle *= 0.9;
-  }
-  if (telemetry.weather === 'heavy_rain') {
-    throttle *= 0.8;
+    throttle = 0.15;
+    brake = 0.3;
+    steering *= 0.4;
   }
 
   return { steering: steering, throttle: throttle, brake: brake };
@@ -185,101 +161,73 @@ export const exampleBots: Array<{name: string, team: string, teamColor: string, 
     team: 'Silk Racing',
     teamColor: '#2ecc71',
     code: `
-  // Smooth Operator: Balanced driver optimizing for smoothness
+  // Smooth Operator v2: Predictive braking, zero wall hits
   var left = telemetry.trackEdges.left;
   var right = telemetry.trackEdges.right;
   var total = left + right;
+  var halfWidth = total / 2;
+  var speed = telemetry.speed;
 
-  // Smooth steering with gradual corrections
+  // Smooth centre-tracking
   var offset = (right - left) / total;
-  var steering = offset * 2.0;
+  var steerGain = speed > 80 ? 1.0 : 1.8;
+  var steering = offset * steerGain;
+  // Dampen aggressive corrections
+  if (steering > 0.5) steering = 0.5 + (steering - 0.5) * 0.3;
+  if (steering < -0.5) steering = -0.5 + (steering + 0.5) * 0.3;
 
-  // Smooth the steering output to avoid jerky inputs
-  if (steering > 0.5) steering = 0.5 + (steering - 0.5) * 0.5;
-  if (steering < -0.5) steering = -0.5 + (steering + 0.5) * 0.5;
-
-  // Moderate base throttle
-  var throttle = 0.7;
+  var throttle = 0.85;
   var brake = 0;
 
-  // Progressive braking for corners
-  if (total < 50 && telemetry.speed > 150) {
-    throttle = 0.4;
-    brake = 0.15;
-  }
-  if (total < 35) {
+  // Wall danger
+  var minEdge = left < right ? left : right;
+  var danger = 1.0 - (minEdge / halfWidth);
+  if (danger < 0) danger = 0;
+
+  // Speed target based on track width — wider = faster
+  var targetSpeed = 60 + (total - 30) * 8;  // 30px→60, 42px→156
+  if (targetSpeed > 220) targetSpeed = 220;
+  if (targetSpeed < 50) targetSpeed = 50;
+
+  // If above target speed, coast or brake
+  if (speed > targetSpeed * 1.2) {
+    throttle = 0;
+    brake = 0.3;
+  } else if (speed > targetSpeed) {
     throttle = 0.3;
-    brake = 0.25;
+  } else {
+    throttle = 0.9;
   }
-  if (total < 25) {
+
+  // Emergency wall avoidance
+  if (danger > 0.65 && speed > 50) {
     throttle = 0.15;
-    brake = 0.35;
+    brake = 0.4;
   }
 
-  // Smooth acceleration out of corners - ramp up on wider sections
-  if (total > 50 && total < 70) {
-    throttle = 0.75;
-  }
-  if (total > 70) {
-    throttle = 0.85;
-  }
-
-  // Intelligent tyre management - the key strength
-  var tyreMultiplier = 1.0;
-  if (telemetry.tyreWear > 0.3) {
-    tyreMultiplier = 1.0 - (telemetry.tyreWear - 0.3) * 0.4;
-  }
-  throttle *= tyreMultiplier;
-  // Also reduce steering aggressiveness on worn tyres to prevent slides
-  if (telemetry.tyreWear > 0.5) {
-    steering *= 0.85;
-  }
-
-  // Fuel management - ease off when fuel is low
-  if (telemetry.fuel < 0.2) {
-    throttle *= 0.9;
-  }
-
-  // Smart DRS usage - only on proper straights
-  if (telemetry.drsAvailable && total > 60 && telemetry.speed > 100) {
-    throttle = 0.95;
+  // Wide + centred = full throttle
+  if (total >= 38 && danger < 0.25 && speed < targetSpeed) {
+    throttle = 1.0;
     brake = 0;
   }
 
-  // Safe following distance with draft benefit
-  if (telemetry.distToCarAhead < 60) {
-    throttle *= 0.8;
-  }
-  if (telemetry.distToCarAhead < 30) {
-    throttle = 0.25;
-    brake = 0.15;
+  // DRS
+  if (telemetry.drsAvailable && danger < 0.25) {
+    throttle = 1.0;
+    brake = 0;
   }
 
-  // Surface awareness
-  if (telemetry.currentSurface === 'kerb') {
-    throttle *= 0.8;
-    steering *= 0.75;
-  }
+  // Off-track
   if (telemetry.currentSurface === 'grass' || telemetry.currentSurface === 'gravel') {
-    throttle = 0.1;
-    brake = 0.3;
+    throttle = 0.15;
+    brake = 0.25;
     steering *= 0.4;
   }
 
-  // Weather adaptation
-  if (telemetry.weather === 'light_rain') {
-    throttle *= 0.85;
-    steering *= 0.8;
-  }
-  if (telemetry.weather === 'heavy_rain') {
-    throttle *= 0.7;
-    steering *= 0.65;
-    brake *= 0.8;
-  }
-
-  // Conserve mode from strategy - save tyres and fuel
-  if (strategy.mode === 'conserve') {
-    throttle *= 0.9;
+  // Weather
+  if (telemetry.weather !== 'dry') {
+    throttle *= 0.8;
+    steering *= 0.75;
   }
 
   return { steering: steering, throttle: throttle, brake: brake };
